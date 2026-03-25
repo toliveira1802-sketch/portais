@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { getDashboardStats } from "../lib/supabase"
+import { useIsMobile } from "../lib/useIsMobile"
 
 const COR = "#1d4ed8"
 
 export default function DashboardConsultor({ onNavigate }: { onNavigate: (k: string) => void }) {
-  const { consultor, company } = useAuth()
+  const { consultor } = useAuth()
+  const isMobile = useIsMobile()
   const [stats, setStats] = useState({ osAbertas: 0, osHoje: 0, clientesNoMes: 0, faturamentoMes: 0 })
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +27,7 @@ export default function DashboardConsultor({ onNavigate }: { onNavigate: (k: str
   return (
     <div>
       {/* KPIs */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", marginBottom: "24px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: isMobile ? "10px" : "14px", marginBottom: "24px" }}>
         {[
           { icon: "🚗", label: "Veiculos no Patio", valor: loading ? "..." : stats.osAbertas, cor: "29,78,216" },
           { icon: "📅", label: "Agendamentos Hoje", valor: loading ? "..." : stats.osHoje, cor: "29,78,216" },
@@ -62,7 +64,7 @@ export default function DashboardConsultor({ onNavigate }: { onNavigate: (k: str
       </div>
 
       {/* Quick Access Cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px" }}>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: isMobile ? "10px" : "14px" }}>
         {[
           { icon: "🔧", label: "Operacional", sub: "Patio e OS em andamento", key: "patio", bg: "linear-gradient(135deg, rgba(29,78,216,0.15), rgba(29,78,216,0.05))", bor: "rgba(29,78,216,0.3)" },
           { icon: "💰", label: "Financeiro", sub: "Faturamento e metas", key: "financeiro", bg: "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))", bor: "rgba(16,185,129,0.3)" },

@@ -1,5 +1,6 @@
 import { ReactNode, useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
+import { useIsMobile } from "../lib/useIsMobile"
 
 const COR = "#1d4ed8"
 
@@ -40,6 +41,8 @@ const sections: NavSection[] = [
 export default function ConsultorLayout({ children, activeKey, onNavigate }: { children: ReactNode; activeKey: string; onNavigate: (k: string) => void }) {
   const { consultor, company, logout } = useAuth()
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
+  const isMobile = useIsMobile()
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const toggleSection = (title: string) => {
     setCollapsed(prev => ({ ...prev, [title]: !prev[title] }))
@@ -50,7 +53,7 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
   const NavItem = ({ item }: { item: { icon: string; label: string; key: string } }) => {
     const active = activeKey === item.key
     return (
-      <button onClick={() => onNavigate(item.key)} style={{
+      <button onClick={() => { onNavigate(item.key); if (isMobile) setSidebarOpen(false) }} style={{
         display: "flex", alignItems: "center", gap: "10px", padding: "8px 14px",
         borderRadius: "10px", width: "100%", textAlign: "left",
         background: active ? COR : "transparent",
@@ -72,7 +75,10 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
     <div style={{ display: "flex", minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Inter',sans-serif", color: "#e2e8f0" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} button{font-family:inherit;} ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}`}</style>
 
-      <aside style={{ width: "210px", minHeight: "100vh", background: "#111118", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 100, overflowY: "auto" }}>
+      {/* Mobile overlay */}
+      {isMobile && sidebarOpen && <div onClick={() => setSidebarOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 199 }} />}
+
+      <aside style={{ width: isMobile ? "260px" : "210px", minHeight: "100vh", background: "#111118", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 200, overflowY: "auto", transform: isMobile && !sidebarOpen ? "translateX(-100%)" : "translateX(0)", transition: "transform 0.3s ease" }}>
 
         {/* Logo */}
         <div style={{ padding: "18px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: "10px" }}>
@@ -135,19 +141,22 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
         </div>
       </aside>
 
-      <main style={{ flex: 1, marginLeft: "210px", display: "flex", flexDirection: "column" }}>
-        <header style={{ padding: "14px 32px", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "#111118", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div>
-            <h1 style={{ fontSize: "20px", fontWeight: "700", color: "#fff" }}>
+      <main style={{ flex: 1, marginLeft: isMobile ? 0 : "210px", display: "flex", flexDirection: "column" }}>
+        <header style={{ padding: isMobile ? "12px 16px" : "14px 32px", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "#111118", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px" }}>
+          {isMobile && (
+            <button onClick={() => setSidebarOpen(true)} style={{ background: "transparent", border: "none", color: "#e4e4e7", fontSize: "20px", cursor: "pointer", padding: "4px 8px" }}>☰</button>
+          )}
+          <div style={{ flex: 1 }}>
+            <h1 style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "700", color: "#fff" }}>
               {allItems.find(n => n.key === activeKey)?.label || "Dashboard"}
             </h1>
-            <p style={{ color: "#6b7280", fontSize: "13px", marginTop: "2px" }}>Visao geral em tempo real</p>
+            {!isMobile && <p style={{ color: "#6b7280", fontSize: "13px", marginTop: "2px" }}>Visao geral em tempo real</p>}
           </div>
-          <button onClick={() => onNavigate("nova-os")} style={{ padding: "10px 20px", background: COR, border: "none", borderRadius: "10px", color: "#fff", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>
+          <button onClick={() => onNavigate("nova-os")} style={{ padding: isMobile ? "8px 14px" : "10px 20px", background: COR, border: "none", borderRadius: "10px", color: "#fff", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" }}>
             + Nova OS
           </button>
         </header>
-        <div style={{ flex: 1, padding: "28px 32px" }}>{children}</div>
+        <div style={{ flex: 1, padding: isMobile ? "16px" : "28px 32px" }}>{children}</div>
       </main>
     </div>
   )

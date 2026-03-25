@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom"
 import { AuthProvider, useAuth } from "./contexts/AuthContext"
 import SelecionarPerfil from "./pages/SelecionarPerfil"
 import LoginConsultor from "./pages/LoginConsultor"
@@ -25,13 +26,14 @@ import DevIAPortal from "./pages/dev/DevIAPortal"
 import DevPerfilIA from "./pages/dev/DevPerfilIA"
 import DevIAQG from "./pages/dev/DevIAQG"
 
-type Portal = "selecionar" | "login-consultor" | "login-gestao" | "login-mecanico" | "login-cliente" | "login-dev"
+// ── TIPOS ───────────────────────────────────────────────────────
 type ConsultorPage = "dashboard" | "patio" | "nova-os" | "clientes" | "ordens" | "visao-geral" | "agendamentos" | "financeiro" | "produtividade" | "agenda-mec" | "avaliacao-diaria"
 type GestaoPg = "gestao-visao" | "gestao-os" | "gestao-metas" | "gestao-melhorias" | "gestao-financeiro" | "gestao-comercial" | "gestao-fornecedores" | "gestao-operacoes" | "gestao-rh" | "gestao-tecnologia" | "gestao-orfaos"
 type MecPg = "mec-os" | "mec-checklist" | "mec-agenda" | "mec-patio"
 type CliPg = "cli-dashboard" | "cli-veiculos" | "cli-os" | "cli-avaliacoes"
 type DevPg = "dev-dashboard" | "dev-navigator" | "dev-logs" | "dev-config" | "dev-docs" | "dev-api" | "dev-permissoes" | "dev-integracoes" | "dev-ia-qg" | "dev-perfil-ia" | "dev-ia-portal" | "dev-tables" | "dev-usuarios" | "dev-banco" | "dev-sql" | "dev-processos" | "dev-ferramentas" | "sidebar-gestao" | "sidebar-consultor" | "sidebar-mecanico"
 
+// ── COMPONENTES AUXILIARES ──────────────────────────────────────
 const Spinner = () => (
   <div style={{ minHeight:"100vh", background:"#09090b", display:"flex", alignItems:"center", justifyContent:"center", color:"#52525b", fontFamily:"sans-serif" }}>
     <div style={{ textAlign:"center" }}>
@@ -42,7 +44,7 @@ const Spinner = () => (
   </div>
 )
 
-const EmConstrucao = ({ titulo, cor = "#1d4ed8" }: { titulo: string; cor?: string }) => (
+const EmConstrucao = ({ titulo }: { titulo: string }) => (
   <div style={{ display:"flex", alignItems:"center", justifyContent:"center", minHeight:"60vh", flexDirection:"column", gap:"16px" }}>
     <div style={{ fontSize:"48px" }}>🚧</div>
     <h2 style={{ color:"#e4e4e7", fontSize:"20px", fontWeight:"600" }}>{titulo}</h2>
@@ -50,45 +52,31 @@ const EmConstrucao = ({ titulo, cor = "#1d4ed8" }: { titulo: string; cor?: strin
   </div>
 )
 
-// ── PORTAL CONSULTOR ────────────────────────────────────────────
-function PortalConsultor({ onLogout, onBack }: { onLogout: () => void; onBack: () => void }) {
-  const { consultor, loading } = useAuth()
-  const [page, setPage] = useState<ConsultorPage>("dashboard")
-
-  if (loading) return <Spinner />
-  if (!consultor) return <LoginConsultor onBack={onBack} />
-
-  const renderPage = () => {
-    if (page === "dashboard") return <DashboardConsultor onNavigate={(k) => setPage(k as ConsultorPage)} />
-    if (page === "patio") return <PatioPagina />
-    if (page === "agendamentos") return <Agendamentos />
-    if (page === "clientes") return <ClientesPagina />
-    if (page === "ordens") return <OrdensPagina onNavigate={(k) => setPage(k as ConsultorPage)} />
-    if (page === "nova-os") return <NovaOS onNavigate={(k) => setPage(k as ConsultorPage)} />
-    return <EmConstrucao titulo={page} />
-  }
-
-  return (
-    <ConsultorLayout activeKey={page} onNavigate={(k) => setPage(k as ConsultorPage)}>
-      {renderPage()}
-    </ConsultorLayout>
-  )
-}
-
-// ── LOGIN SIMPLES (gestao, mecanico, cliente) ───────────────────
-function LoginSimples({ titulo, cor, onLogin, onBack }: { titulo:string; cor:string; onLogin:()=>void; onBack:()=>void }) {
+// ── LOGIN COM VALIDACAO SUPABASE ────────────────────────────────
+function LoginSimples({ titulo, cor, tabela, camposBusca, onLogin }: { titulo:string; cor:string; tabela:string; camposBusca?:string; onLogin:(user: any)=>void }) {
+  const navigate = useNavigate()
   const [u, setU] = useState("")
   const [p, setP] = useState("")
   const [err, setErr] = useState("")
+  const [loading, setLoading] = useState(false)
   const inp: React.CSSProperties = {
     width:"100%", padding:"12px 14px", background:"rgba(255,255,255,0.05)",
     border:"1px solid rgba(255,255,255,0.1)", borderRadius:"10px", color:"#e4e4e7",
     fontSize:"14px", outline:"none", boxSizing:"border-box", fontFamily:"inherit"
   }
-  const handle = (e: React.FormEvent) => {
+  const handle = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!u || !p) { setErr("Preencha usuario e senha"); return }
-    onLogin()
+    setLoading(true); setErr("")
+    try {
+      const { supabase: sb } = await import("./lib/supabase")
+      const campos = camposBusca || "username,email"
+      const orFilter = campos.split(",").map(c => `${c.trim()}.eq.${u}`).join(",")
+      const { data } = await sb.from(tabela).select("*").or(orFilter).single()
+      if (!data) { setErr("Usuario nao encontrado"); setLoading(false); return }
+      if (data.ativo === false) { setErr("Usuario inativo"); setLoading(false); return }
+      onLogin(data)
+    } catch { setErr("Erro ao autenticar") } finally { setLoading(false) }
   }
   return (
     <div style={{ minHeight:"100vh", background:"#09090b", display:"flex", alignItems:"center", justifyContent:"center", fontFamily:"'Inter',sans-serif" }}>
@@ -107,7 +95,7 @@ function LoginSimples({ titulo, cor, onLogin, onBack }: { titulo:string; cor:str
         <div style={{ background:"rgba(255,255,255,0.03)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"16px", padding:"28px" }}>
           <form onSubmit={handle}>
             <div style={{ marginBottom:"14px" }}>
-              <label style={{ display:"block", color:"#71717a", fontSize:"11px", letterSpacing:"1px", textTransform:"uppercase", marginBottom:"6px" }}>Usuario</label>
+              <label style={{ display:"block", color:"#71717a", fontSize:"11px", letterSpacing:"1px", textTransform:"uppercase", marginBottom:"6px" }}>Usuario ou Email</label>
               <input style={inp} value={u} onChange={e=>setU(e.target.value)} placeholder="seu.usuario" />
             </div>
             <div style={{ marginBottom:"20px" }}>
@@ -115,12 +103,12 @@ function LoginSimples({ titulo, cor, onLogin, onBack }: { titulo:string; cor:str
               <input type="password" style={inp} value={p} onChange={e=>setP(e.target.value)} placeholder="••••••••" />
             </div>
             {err && <div style={{ background:"rgba(239,68,68,0.1)", border:"1px solid rgba(239,68,68,0.2)", borderRadius:"8px", padding:"10px 12px", color:"#fca5a5", fontSize:"13px", marginBottom:"14px" }}>{err}</div>}
-            <button type="submit" style={{ width:"100%", padding:"13px", background:cor, border:"none", borderRadius:"10px", color:"#fff", fontSize:"14px", fontWeight:"700", cursor:"pointer", fontFamily:"inherit" }}>
-              Entrar
+            <button type="submit" disabled={loading} style={{ width:"100%", padding:"13px", background:loading?`${cor}80`:cor, border:"none", borderRadius:"10px", color:"#fff", fontSize:"14px", fontWeight:"700", cursor:loading?"wait":"pointer", fontFamily:"inherit" }}>
+              {loading ? "Verificando..." : "Entrar"}
             </button>
           </form>
         </div>
-        <button onClick={onBack} style={{ marginTop:"16px", display:"block", textAlign:"center", width:"100%", background:"transparent", border:"none", color:"#52525b", cursor:"pointer", fontSize:"13px" }}>
+        <button onClick={() => navigate("/")} style={{ marginTop:"16px", display:"block", textAlign:"center", width:"100%", background:"transparent", border:"none", color:"#52525b", cursor:"pointer", fontSize:"13px" }}>
           ← Voltar
         </button>
       </div>
@@ -128,12 +116,45 @@ function LoginSimples({ titulo, cor, onLogin, onBack }: { titulo:string; cor:str
   )
 }
 
+// ── SELECIONAR PERFIL (wrapper com router) ──────────────────────
+function SelecionarPerfilRoute() {
+  const navigate = useNavigate()
+  return <SelecionarPerfil onSelect={(k) => navigate(`/${k}`)} />
+}
+
+// ── PORTAL CONSULTOR ────────────────────────────────────────────
+function PortalConsultor() {
+  const navigate = useNavigate()
+  const { consultor, loading } = useAuth()
+  const [page, setPage] = useState<ConsultorPage>("dashboard")
+
+  if (loading) return <Spinner />
+  if (!consultor) return <LoginConsultor onBack={() => navigate("/")} />
+
+  const renderPage = () => {
+    if (page === "dashboard") return <DashboardConsultor onNavigate={(k) => setPage(k as ConsultorPage)} />
+    if (page === "patio") return <PatioPagina />
+    if (page === "agendamentos") return <Agendamentos />
+    if (page === "clientes") return <ClientesPagina />
+    if (page === "ordens") return <OrdensPagina onNavigate={(k) => setPage(k as ConsultorPage)} />
+    if (page === "nova-os") return <NovaOS onNavigate={(k) => setPage(k as ConsultorPage)} />
+    return <EmConstrucao titulo={page} />
+  }
+
+  return (
+    <ConsultorLayout activeKey={page} onNavigate={(k) => setPage(k as ConsultorPage)}>
+      {renderPage()}
+    </ConsultorLayout>
+  )
+}
+
 // ── PORTAL GESTAO ───────────────────────────────────────────────
-function PortalGestao({ onLogout, onBack }: { onLogout:()=>void; onBack:()=>void }) {
+function PortalGestao() {
+  const navigate = useNavigate()
   const [logado, setLogado] = useState(false)
   const [page, setPage] = useState<GestaoPg>("gestao-visao")
 
-  if (!logado) return <LoginSimples titulo="Portal Gestao" cor="#7c3aed" onLogin={() => setLogado(true)} onBack={onBack} />
+  if (!logado) return <LoginSimples titulo="Portal Gestao" cor="#7c3aed" tabela="colaboradores_portal_gestao" onLogin={() => setLogado(true)} />
 
   const renderPage = () => {
     if (page === "gestao-visao") return <GestaoDashboard onNavigate={(k) => setPage(k as GestaoPg)} />
@@ -141,40 +162,38 @@ function PortalGestao({ onLogout, onBack }: { onLogout:()=>void; onBack:()=>void
   }
 
   return (
-    <GestaoLayout activeKey={page} onNavigate={(k) => setPage(k as GestaoPg)} onLogout={onLogout}>
+    <GestaoLayout activeKey={page} onNavigate={(k) => setPage(k as GestaoPg)} onLogout={() => navigate("/")}>
       <div>{renderPage()}</div>
     </GestaoLayout>
   )
 }
 
 // ── PORTAL MECANICO ─────────────────────────────────────────────
-function PortalMecanico({ onLogout, onBack }: { onLogout:()=>void; onBack:()=>void }) {
+function PortalMecanico() {
+  const navigate = useNavigate()
   const [logado, setLogado] = useState(false)
   const [page, setPage] = useState<MecPg>("mec-os")
 
-  if (!logado) return <LoginSimples titulo="Portal Mecanico" cor="#ea580c" onLogin={() => setLogado(true)} onBack={onBack} />
+  if (!logado) return <LoginSimples titulo="Portal Mecanico" cor="#ea580c" tabela="colaboradores_portal_mecanico" onLogin={() => setLogado(true)} />
 
   const renderPage = () => {
-    if (page === "mec-os") return <MecanicoOSPage onNavigate={(k) => setPage(k as MecPg)} onLogout={onLogout} />
-    return (
-      <div style={{ padding:"28px 32px" }}>
-        <EmConstrucao titulo={page} />
-      </div>
-    )
+    if (page === "mec-os") return <MecanicoOSPage onNavigate={(k) => setPage(k as MecPg)} onLogout={() => navigate("/")} />
+    return <div style={{ padding:"28px 32px" }}><EmConstrucao titulo={page} /></div>
   }
 
   return <>{renderPage()}</>
 }
 
 // ── PORTAL CLIENTE ──────────────────────────────────────────────
-function PortalCliente({ onLogout, onBack }: { onLogout:()=>void; onBack:()=>void }) {
+function PortalCliente() {
+  const navigate = useNavigate()
   const [logado, setLogado] = useState(false)
   const [page, setPage] = useState<CliPg>("cli-dashboard")
 
-  if (!logado) return <LoginSimples titulo="Portal Cliente" cor="#0d9488" onLogin={() => setLogado(true)} onBack={onBack} />
+  if (!logado) return <LoginSimples titulo="Portal Cliente" cor="#0d9488" tabela="clientes" camposBusca="email,telefone" onLogin={() => setLogado(true)} />
 
   const renderPage = () => {
-    if (page === "cli-dashboard") return <ClienteDashboardPage onNavigate={(k) => setPage(k as CliPg)} onLogout={onLogout} />
+    if (page === "cli-dashboard") return <ClienteDashboardPage onNavigate={(k) => setPage(k as CliPg)} onLogout={() => navigate("/")} />
     return <div style={{ padding:"28px 32px" }}><EmConstrucao titulo={page} /></div>
   }
 
@@ -182,84 +201,13 @@ function PortalCliente({ onLogout, onBack }: { onLogout:()=>void; onBack:()=>voi
 }
 
 // ── PORTAL DEV ──────────────────────────────────────────────────
-function PortalDev({ onLogout, onBack }: { onLogout: () => void; onBack: () => void }) {
+function PortalDev() {
+  const navigate = useNavigate()
   const [logado, setLogado] = useState(false)
   const [userName, setUserName] = useState("")
   const [page, setPage] = useState<DevPg>("dev-dashboard")
-  const [loginErr, setLoginErr] = useState("")
-  const [loginUser, setLoginUser] = useState("")
-  const [loginPass, setLoginPass] = useState("")
-  const [loginLoading, setLoginLoading] = useState(false)
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!loginUser || !loginPass) { setLoginErr("Preencha usuario e senha"); return }
-    setLoginLoading(true)
-    setLoginErr("")
-    try {
-      const { createClient } = await import("@supabase/supabase-js")
-      const sb = createClient(
-        import.meta.env.VITE_SUPABASE_URL || "https://acuufrgoyjwzlyhopaus.supabase.co",
-        import.meta.env.VITE_SUPABASE_ANON_KEY || ""
-      )
-      const { data: dev } = await sb.from("colaboradores_portal_dev")
-        .select("*")
-        .or(`username.eq.${loginUser},email.eq.${loginUser}`)
-        .single()
-      if (!dev) { setLoginErr("Usuario nao encontrado"); setLoginLoading(false); return }
-      if (!dev.ativo) { setLoginErr("Usuario inativo"); setLoginLoading(false); return }
-      setUserName(dev.nome.split(" ").slice(0, 2).join(" "))
-      setLogado(true)
-    } catch {
-      setLoginErr("Erro ao autenticar")
-    } finally {
-      setLoginLoading(false)
-    }
-  }
-
-  if (!logado) {
-    const inp: React.CSSProperties = {
-      width: "100%", padding: "12px 14px", background: "rgba(255,255,255,0.05)",
-      border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "#e4e4e7",
-      fontSize: "14px", outline: "none", boxSizing: "border-box", fontFamily: "inherit"
-    }
-    return (
-      <div style={{ minHeight: "100vh", background: "#09090b", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "'Inter',sans-serif" }}>
-        <div style={{ width: "100%", maxWidth: "400px", padding: "0 24px" }}>
-          <div style={{ textAlign: "center", marginBottom: "40px" }}>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "12px", marginBottom: "20px" }}>
-              <div style={{ width: "40px", height: "40px", background: "#10b981", borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "900", color: "#fff", fontSize: "13px" }}>DA</div>
-              <div style={{ textAlign: "left" }}>
-                <div style={{ color: "#fff", fontWeight: "700" }}>Doctor Auto</div>
-                <div style={{ color: "#71717a", fontSize: "12px" }}>Portal Developer</div>
-              </div>
-            </div>
-            <h1 style={{ color: "#fff", fontSize: "22px", fontWeight: "700", marginBottom: "6px" }}>Acesso Dev</h1>
-            <p style={{ color: "#71717a", fontSize: "13px" }}>Restrito a desenvolvedores</p>
-          </div>
-          <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "16px", padding: "28px" }}>
-            <form onSubmit={handleLogin}>
-              <div style={{ marginBottom: "14px" }}>
-                <label style={{ display: "block", color: "#71717a", fontSize: "11px", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Usuario ou Email</label>
-                <input style={inp} value={loginUser} onChange={e => setLoginUser(e.target.value)} placeholder="THALES_DEV" />
-              </div>
-              <div style={{ marginBottom: "20px" }}>
-                <label style={{ display: "block", color: "#71717a", fontSize: "11px", letterSpacing: "1px", textTransform: "uppercase", marginBottom: "6px" }}>Senha</label>
-                <input type="password" style={inp} value={loginPass} onChange={e => setLoginPass(e.target.value)} placeholder="••••••••" />
-              </div>
-              {loginErr && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: "8px", padding: "10px 12px", color: "#fca5a5", fontSize: "13px", marginBottom: "14px" }}>{loginErr}</div>}
-              <button type="submit" disabled={loginLoading} style={{ width: "100%", padding: "13px", background: loginLoading ? "rgba(16,185,129,0.5)" : "#10b981", border: "none", borderRadius: "10px", color: "#fff", fontSize: "14px", fontWeight: "700", cursor: loginLoading ? "wait" : "pointer", fontFamily: "inherit" }}>
-                {loginLoading ? "Verificando..." : "Entrar"}
-              </button>
-            </form>
-          </div>
-          <button onClick={onBack} style={{ marginTop: "16px", display: "block", textAlign: "center", width: "100%", background: "transparent", border: "none", color: "#52525b", cursor: "pointer", fontSize: "13px" }}>
-            ← Voltar
-          </button>
-        </div>
-      </div>
-    )
-  }
+  if (!logado) return <LoginSimples titulo="Portal Developer" cor="#ef4444" tabela="colaboradores_portal_dev" onLogin={(user) => { setUserName(user.nome?.split(" ").slice(0,2).join(" ")); setLogado(true) }} />
 
   const renderPage = () => {
     if (page === "dev-dashboard") return <DevDashboard onNavigate={(k) => setPage(k as DevPg)} />
@@ -272,50 +220,29 @@ function PortalDev({ onLogout, onBack }: { onLogout: () => void; onBack: () => v
     if (page === "dev-ia-portal") return <DevIAPortal />
     if (page === "dev-perfil-ia") return <DevPerfilIA />
     if (page === "dev-ia-qg") return <DevIAQG />
-    return (
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", flexDirection: "column", gap: "16px" }}>
-        <div style={{ fontSize: "48px" }}>🚧</div>
-        <h2 style={{ color: "#e4e4e7", fontSize: "20px", fontWeight: "600" }}>{page}</h2>
-        <p style={{ color: "#71717a", fontSize: "14px" }}>Em construcao</p>
-      </div>
-    )
+    return <EmConstrucao titulo={page} />
   }
 
   return (
-    <DevLayout activeKey={page} onNavigate={(k) => setPage(k as DevPg)} onLogout={onLogout} userName={userName}>
+    <DevLayout activeKey={page} onNavigate={(k) => setPage(k as DevPg)} onLogout={() => navigate("/")} userName={userName}>
       {renderPage()}
     </DevLayout>
   )
 }
 
-// ── MAIN APP ────────────────────────────────────────────────────
-function MainApp() {
-  const [portal, setPortal] = useState<Portal>("selecionar")
-
-  const reset = () => setPortal("selecionar")
-
-  if (portal === "selecionar") return <SelecionarPerfil onSelect={(k) => {
-    if (k === "consultor") setPortal("login-consultor")
-    else if (k === "gestao") setPortal("login-gestao")
-    else if (k === "mecanico") setPortal("login-mecanico")
-    else if (k === "cliente") setPortal("login-cliente")
-    else if (k === "dev") setPortal("login-dev")
-  }} />
-
-  if (portal === "login-consultor") return (
-    <AuthProvider>
-      <PortalConsultor onLogout={reset} onBack={reset} />
-    </AuthProvider>
-  )
-
-  if (portal === "login-gestao") return <PortalGestao onLogout={reset} onBack={reset} />
-  if (portal === "login-mecanico") return <PortalMecanico onLogout={reset} onBack={reset} />
-  if (portal === "login-cliente") return <PortalCliente onLogout={reset} onBack={reset} />
-  if (portal === "login-dev") return <PortalDev onLogout={reset} onBack={reset} />
-
-  return null
-}
-
+// ── APP COM ROTAS ───────────────────────────────────────────────
 export default function App() {
-  return <MainApp />
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<SelecionarPerfilRoute />} />
+        <Route path="/consultor" element={<AuthProvider><PortalConsultor /></AuthProvider>} />
+        <Route path="/gestao" element={<PortalGestao />} />
+        <Route path="/mecanico" element={<PortalMecanico />} />
+        <Route path="/cliente" element={<PortalCliente />} />
+        <Route path="/dev" element={<PortalDev />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  )
 }
