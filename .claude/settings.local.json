@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(cmd.exe /c \"npm install\")",
+      "Bash(cmd.exe /c \"npm install 2>&1\")",
+      "Bash(export PATH=\"$PATH:/c/Program Files/nodejs\")",
+      "Bash(npm run:*)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__claude_ai_Notion__notion-fetch",
+      "mcp__claude_ai_Figma__get_figjam",
+      "Bash(powershell -ExecutionPolicy Bypass -File \"c:/Users/Doctor/OneDrive/Documentos/GitHub/portais/setup-vault.ps1\")",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File \"./setup-vault.ps1\")",
+      "Bash(npx tsc:*)",
+      "mcp__claude_ai_Notion__notion-update-page"
+    ],
+    "additionalDirectories": [
+      "c:\\Users\\Doctor\\OneDrive\\Documentos\\GitHub\\portais"
+    ]
+  }
+}

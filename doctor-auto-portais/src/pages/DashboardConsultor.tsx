@@ -2,98 +2,87 @@ import { useEffect, useState } from "react"
 import { useAuth } from "../contexts/AuthContext"
 import { getDashboardStats } from "../lib/supabase"
 
-const gestaoCards = [
-  { label:"Operacional", sub:"Patio e OS em andamento", icon:"🔧", bg:"#1e3a5f", accent:"#3b82f6", key:"operacional" },
-  { label:"Financeiro", sub:"Faturamento e metas", icon:"💰", bg:"#14321e", accent:"#22c55e", key:"financeiro" },
-  { label:"Produtividade", sub:"Ranking e performance", icon:"📊", bg:"#2d1b4e", accent:"#a855f7", key:"produtividade" },
-  { label:"Agenda do Dia", sub:"Grade horaria dos mecanicos", icon:"📅", bg:"#3b1f08", accent:"#f59e0b", key:"agendamentos" },
-]
+const COR = "#1d4ed8"
 
-export default function DashboardConsultor({ onNavigate }: { onNavigate?: (k: string) => void }) {
+export default function DashboardConsultor({ onNavigate }: { onNavigate: (k: string) => void }) {
   const { consultor, company } = useAuth()
-  const [stats, setStats] = useState({ osAbertas:0, osHoje:0, clientesNoMes:0, faturamentoMes:0 })
+  const [stats, setStats] = useState({ osAbertas: 0, osHoje: 0, clientesNoMes: 0, faturamentoMes: 0 })
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => { if (consultor?.empresa_id) load() }, [consultor])
+  useEffect(() => {
+    if (consultor?.empresa_id) {
+      getDashboardStats(consultor.empresa_id).then(s => { setStats(s); setLoading(false) }).catch(() => setLoading(false))
+    }
+  }, [consultor])
 
-  const load = async () => {
-    try { setStats(await getDashboardStats(consultor!.empresa_id)) }
-    catch(e) { console.error(e) }
-    finally { setLoading(false) }
+  const cardStyle: React.CSSProperties = {
+    background: "rgba(255,255,255,0.03)",
+    border: "1px solid rgba(255,255,255,0.08)",
+    borderRadius: "14px",
+    padding: "18px 20px",
   }
 
-  const hora = new Date().getHours()
-  const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite"
-
-  const cards = [
-    { label:"Veiculos no Patio", value:stats.osAbertas, icon:"🚗", bg:"#1e3a5f", color:"#93c5fd" },
-    { label:"Agendamentos Hoje", value:stats.osHoje, icon:"📅", bg:"#1a2e1a", color:"#86efac" },
-    { label:"Faturamento Mes", value:stats.faturamentoMes.toLocaleString("pt-BR",{style:"currency",currency:"BRL"}), icon:"💰", bg:"#1e3a2e", color:"#6ee7b7" },
-    { label:"Entregas no Mes", value:stats.clientesNoMes, icon:"🔑", bg:"#3b2a0a", color:"#fcd34d" },
-  ]
-
   return (
-    <div style={{ display:"flex", flexDirection:"column", gap:"20px" }}>
-      <div style={{ marginBottom:"4px" }}>
-        <p style={{ color:"#52525b", fontSize:"14px", margin:"0 0 4px" }}>
-          {saudacao}, {consultor?.nome?.split(" ")[0]} 👋
-        </p>
-        <div style={{ display:"flex", gap:"10px", alignItems:"center" }}>
-          <p style={{ color:"#71717a", fontSize:"13px", margin:0 }}>
-            {new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"})}
-          </p>
-          {company && (
-            <span style={{ background:"rgba(255,255,255,0.05)", border:"1px solid rgba(255,255,255,0.08)", borderRadius:"99px", padding:"2px 10px", fontSize:"12px", color:"#52525b" }}>
-              {company.nome}
-            </span>
-          )}
-        </div>
-      </div>
-
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"14px" }}>
-        {cards.map((c,i) => (
-          <div key={i} style={{ background:c.bg, borderRadius:"14px", padding:"18px 20px", border:"1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"14px" }}>
-              <span style={{ fontSize:"20px" }}>{c.icon}</span>
-              <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:c.color }} />
+    <div>
+      {/* KPIs */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px", marginBottom: "24px" }}>
+        {[
+          { icon: "🚗", label: "Veiculos no Patio", valor: loading ? "..." : stats.osAbertas, cor: "29,78,216" },
+          { icon: "📅", label: "Agendamentos Hoje", valor: loading ? "..." : stats.osHoje, cor: "29,78,216" },
+          { icon: "💰", label: "Faturamento (Mes)", valor: loading ? "..." : `R$ ${(stats.faturamentoMes / 1000).toFixed(0)}k`, cor: "245,158,11" },
+          { icon: "🔧", label: "Entregas no Mes", valor: loading ? "..." : stats.clientesNoMes, cor: "16,185,129" },
+        ].map((kpi, i) => (
+          <div key={i} style={{ ...cardStyle, background: `linear-gradient(135deg, rgba(${kpi.cor},0.12), rgba(0,0,0,0))` }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+              <div>
+                <div style={{ color: "#9ca3af", fontSize: "12px", marginBottom: "6px" }}>{kpi.label}</div>
+                <div style={{ color: "#fff", fontSize: "26px", fontWeight: "700" }}>{kpi.valor}</div>
+              </div>
+              <span style={{ fontSize: "20px", opacity: 0.6 }}>{kpi.icon}</span>
             </div>
-            <div style={{ fontSize:"24px", fontWeight:"700", color:c.color, marginBottom:"4px" }}>
-              {loading ? "..." : c.value}
-            </div>
-            <div style={{ fontSize:"12px", color:"#71717a" }}>{c.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ background:"#111113", border:"1px solid #27272a", borderRadius:"14px", padding:"18px 20px" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"14px" }}>
-          <div style={{ display:"flex", alignItems:"center", gap:"8px" }}>
-            <div style={{ width:"7px", height:"7px", borderRadius:"50%", background:"#3b82f6" }} />
-            <span style={{ color:"#e4e4e7", fontWeight:"600", fontSize:"14px" }}>Pendencias do dia</span>
+      {/* Pendencias do dia */}
+      <div style={{ ...cardStyle, marginBottom: "24px" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: COR }} />
+            <span style={{ color: "#fff", fontSize: "14px", fontWeight: "600" }}>Pendencias do dia</span>
           </div>
-          <button style={{ background:"transparent", border:"none", color:"#52525b", fontSize:"12px", cursor:"pointer" }}>
-            Ver todas
+          <button onClick={() => onNavigate("ordens")} style={{ background: "transparent", border: "none", color: "#6b7280", fontSize: "12px", cursor: "pointer", fontFamily: "inherit" }}>
+            Ver todas &gt;
           </button>
         </div>
-        <div style={{ display:"flex", alignItems:"center", gap:"8px", color:"#22c55e", fontSize:"13px" }}>
-          <span>✓</span> Nenhuma pendencia para hoje. Bom trabalho!
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 14px", background: "rgba(16,185,129,0.08)", borderRadius: "10px", border: "1px solid rgba(16,185,129,0.15)" }}>
+          <span style={{ color: "#10b981", fontSize: "16px" }}>✓</span>
+          <span style={{ color: "#d4d4d8", fontSize: "13px" }}>Nenhuma pendencia para hoje. Bom trabalho!</span>
         </div>
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:"14px" }}>
-        {gestaoCards.map((c,i) => (
-          <div key={i} onClick={() => onNavigate?.(c.key)}
-            style={{ background:c.bg, borderRadius:"14px", padding:"18px", border:"1px solid rgba(255,255,255,0.06)", cursor:"pointer", transition:"transform 0.15s" }}
+      {/* Quick Access Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "14px" }}>
+        {[
+          { icon: "🔧", label: "Operacional", sub: "Patio e OS em andamento", key: "patio", bg: "linear-gradient(135deg, rgba(29,78,216,0.15), rgba(29,78,216,0.05))", bor: "rgba(29,78,216,0.3)" },
+          { icon: "💰", label: "Financeiro", sub: "Faturamento e metas", key: "financeiro", bg: "linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05))", bor: "rgba(16,185,129,0.3)" },
+          { icon: "📈", label: "Produtividade", sub: "Ranking e performance", key: "produtividade", bg: "rgba(255,255,255,0.03)", bor: "rgba(255,255,255,0.08)" },
+          { icon: "📅", label: "Agenda do Dia", sub: "Grade horaria dos mecanicos", key: "agendamentos", bg: "linear-gradient(135deg, rgba(245,158,11,0.12), rgba(245,158,11,0.03))", bor: "rgba(245,158,11,0.25)" },
+        ].map((card, i) => (
+          <button key={i} onClick={() => onNavigate(card.key)} style={{
+            background: card.bg, border: `1px solid ${card.bor}`,
+            borderRadius: "14px", padding: "20px", cursor: "pointer", textAlign: "left",
+            transition: "all 0.2s", fontFamily: "inherit", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: "110px"
+          }}
             onMouseEnter={e => (e.currentTarget as HTMLElement).style.transform = "translateY(-2px)"}
             onMouseLeave={e => (e.currentTarget as HTMLElement).style.transform = "translateY(0)"}
           >
-            <div style={{ display:"flex", justifyContent:"space-between", marginBottom:"24px" }}>
-              <div style={{ width:"38px", height:"38px", background:"rgba(255,255,255,0.08)", borderRadius:"10px", display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px" }}>{c.icon}</div>
-              <span style={{ color:"rgba(255,255,255,0.3)", fontSize:"16px" }}>→</span>
+            <span style={{ fontSize: "24px", marginBottom: "12px" }}>{card.icon}</span>
+            <div>
+              <div style={{ color: "#f4f4f5", fontWeight: "600", fontSize: "14px" }}>{card.label}</div>
+              <div style={{ color: "#71717a", fontSize: "11px", marginTop: "2px" }}>{card.sub}</div>
             </div>
-            <div style={{ color:c.accent, fontWeight:"600", fontSize:"14px", marginBottom:"4px" }}>{c.label}</div>
-            <div style={{ color:"rgba(255,255,255,0.35)", fontSize:"11px" }}>{c.sub}</div>
-          </div>
+          </button>
         ))}
       </div>
     </div>

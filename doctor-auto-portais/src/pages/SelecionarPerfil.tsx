@@ -2,7 +2,7 @@ const portais = [
   { key:"consultor", label:"Consultor", icon:"🔧", cor:"#1d4ed8", sub:"Atendimento e OS" },
   { key:"gestao", label:"Gestao", icon:"📊", cor:"#7c3aed", sub:"Gerenciamento" },
   { key:"mecanico", label:"Mecanico", icon:"⚙️", cor:"#ea580c", sub:"Execucao de servicos" },
-  { key:"cliente", label:"Cliente", icon:"👤", cor:"#0d9488", sub:"Acompanhar veiculos" },
+  { key:"dev", label:"Developer", icon:"💻", cor:"#10b981", sub:"Administracao do sistema" },
 ]
 
 export default function SelecionarPerfil({ onSelect }: { onSelect: (key: string) => void }) {

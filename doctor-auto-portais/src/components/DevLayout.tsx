@@ -1,7 +1,7 @@
 import { ReactNode, useState } from "react"
-import { useAuth } from "../contexts/AuthContext"
 
-const COR = "#1d4ed8"
+const COR = "#ef4444"
+const COR_ACTIVE = "#ef4444"
 
 interface NavSection {
   title: string
@@ -11,34 +11,66 @@ interface NavSection {
 
 const sections: NavSection[] = [
   {
-    title: "",
-    items: [
-      { icon: "📊", label: "Dashboard", key: "dashboard" },
-      { icon: "🚗", label: "Patio", key: "patio" },
-      { icon: "📅", label: "Agenda", key: "agendamentos" },
-    ],
-  },
-  {
-    title: "CADASTRO",
+    title: "DEV",
     collapsible: true,
     items: [
-      { icon: "👤", label: "Clientes", key: "clientes" },
-      { icon: "📋", label: "Ordens de Servico", key: "ordens" },
+      { icon: "📊", label: "/dev/painel", key: "dev-dashboard" },
+      { icon: "🗺️", label: "Page Navigator", key: "dev-navigator" },
+    ],
+  },
+  {
+    title: "SISTEMA",
+    items: [
+      { icon: "📈", label: "Logs", key: "dev-logs" },
+      { icon: "⚙️", label: "Configuracoes", key: "dev-config" },
+      { icon: "📖", label: "Documentacao", key: "dev-docs" },
+      { icon: "🔌", label: "API", key: "dev-api" },
+      { icon: "🔑", label: "Permissoes", key: "dev-permissoes" },
+      { icon: "🔗", label: "Integracoes", key: "dev-integracoes" },
+    ],
+  },
+  {
+    title: "IA",
+    items: [
+      { icon: "🧠", label: "IA QG", key: "dev-ia-qg" },
+      { icon: "🎭", label: "Perfil IA", key: "dev-perfil-ia" },
+      { icon: "💬", label: "IA Portal", key: "dev-ia-portal" },
+    ],
+  },
+  {
+    title: "DADOS",
+    collapsible: true,
+    items: [
+      { icon: "📋", label: "Tables", key: "dev-tables" },
+      { icon: "👥", label: "Users", key: "dev-usuarios" },
+      { icon: "🗄️", label: "Database", key: "dev-banco" },
+      { icon: "⌨️", label: "SQL Agent", key: "dev-sql" },
     ],
   },
   {
     title: "",
     items: [
-      { icon: "💰", label: "Financeiro", key: "financeiro" },
-      { icon: "📈", label: "Produtividade", key: "produtividade" },
-      { icon: "📅", label: "Agenda Mec.", key: "agenda-mec" },
-      { icon: "✅", label: "Avaliacao Diaria", key: "avaliacao-diaria" },
+      { icon: "⚡", label: "Processos", key: "dev-processos" },
+      { icon: "🔧", label: "Ferramentas", key: "dev-ferramentas" },
     ],
   },
 ]
 
-export default function ConsultorLayout({ children, activeKey, onNavigate }: { children: ReactNode; activeKey: string; onNavigate: (k: string) => void }) {
-  const { consultor, company, logout } = useAuth()
+const sidebarLinks = [
+  { icon: "⚙️", label: "SIDEBAR GESTAO", key: "sidebar-gestao" },
+  { icon: "👤", label: "SIDEBAR CONSULTORES", key: "sidebar-consultor" },
+  { icon: "🔧", label: "SIDEBAR MECANICOS", key: "sidebar-mecanico" },
+]
+
+export default function DevLayout({
+  children, activeKey, onNavigate, onLogout, userName
+}: {
+  children: ReactNode
+  activeKey: string
+  onNavigate: (k: string) => void
+  onLogout: () => void
+  userName: string
+}) {
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({})
 
   const toggleSection = (title: string) => {
@@ -53,7 +85,7 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
       <button onClick={() => onNavigate(item.key)} style={{
         display: "flex", alignItems: "center", gap: "10px", padding: "8px 14px",
         borderRadius: "10px", width: "100%", textAlign: "left",
-        background: active ? COR : "transparent",
+        background: active ? COR_ACTIVE : "transparent",
         border: "none",
         color: active ? "#fff" : "#9ca3af",
         cursor: "pointer", fontSize: "13px", fontWeight: active ? "600" : "400",
@@ -72,6 +104,7 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
     <div style={{ display: "flex", minHeight: "100vh", background: "#0a0a0f", fontFamily: "'Inter',sans-serif", color: "#e2e8f0" }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap'); *{box-sizing:border-box;margin:0;padding:0;} button{font-family:inherit;} ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:4px;}`}</style>
 
+      {/* Sidebar */}
       <aside style={{ width: "210px", minHeight: "100vh", background: "#111118", borderRight: "1px solid rgba(255,255,255,0.06)", display: "flex", flexDirection: "column", position: "fixed", left: 0, top: 0, bottom: 0, zIndex: 100, overflowY: "auto" }}>
 
         {/* Logo */}
@@ -79,7 +112,7 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
           <div style={{ width: "32px", height: "32px", background: "linear-gradient(135deg,#dc2626,#b91c1c)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "11px", fontWeight: "800", color: "#fff", flexShrink: 0 }}>DA</div>
           <div>
             <div style={{ color: "#fff", fontWeight: "600", fontSize: "14px" }}>Doctor Auto</div>
-            <div style={{ color: "#6b7280", fontSize: "11px" }}>Consultor</div>
+            <div style={{ color: "#6b7280", fontSize: "11px" }}>Painel DEV</div>
           </div>
         </div>
 
@@ -111,51 +144,55 @@ export default function ConsultorLayout({ children, activeKey, onNavigate }: { c
               )}
             </div>
           ))}
-        </div>
 
-        {/* Nova OS Button */}
-        <div style={{ padding: "12px 12px 8px" }}>
-          <button onClick={() => onNavigate("nova-os")} style={{
-            width: "100%", padding: "10px", background: COR, border: "none", borderRadius: "10px",
-            color: "#fff", fontSize: "13px", fontWeight: "700", cursor: "pointer", fontFamily: "inherit",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "6px"
-          }}>
-            + Nova OS
-          </button>
+          {/* Sidebar Links */}
+          <div style={{ marginTop: "12px", borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "2px" }}>
+            {sidebarLinks.map(link => (
+              <button key={link.key} onClick={() => onNavigate(link.key)} style={{
+                display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px",
+                borderRadius: "10px", width: "100%", textAlign: "left",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
+                color: "#6b7280", cursor: "pointer", fontSize: "11px", fontWeight: "500",
+                transition: "all 0.15s", fontFamily: "inherit"
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.15)" }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = "rgba(255,255,255,0.06)" }}
+              >
+                <span style={{ fontSize: "12px" }}>{link.icon}</span>
+                <span>{link.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Footer */}
         <div style={{ padding: "14px 16px", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
           <div style={{ color: "#4b5563", fontSize: "10px", marginBottom: "2px" }}>Logado como</div>
-          <div style={{ color: "#f1f5f9", fontSize: "12px", fontWeight: "600" }}>{consultor?.nome?.split(" ").slice(0, 2).join(" ")}</div>
-          <div style={{ color: "#6b7280", fontSize: "10px", marginBottom: "2px" }}>{company?.nome}</div>
-          <button onClick={logout} style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "12px", fontWeight: "500", padding: "0", fontFamily: "inherit" }}>
+          <div style={{ color: "#f1f5f9", fontSize: "12px", fontWeight: "600" }}>{userName}</div>
+          <button onClick={onLogout} style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "6px", background: "transparent", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "12px", fontWeight: "500", padding: "0", fontFamily: "inherit" }}>
             ← Sair
           </button>
         </div>
       </aside>
 
+      {/* Main */}
       <main style={{ flex: 1, marginLeft: "210px", display: "flex", flexDirection: "column" }}>
         <header style={{ padding: "14px 32px", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "#111118", position: "sticky", top: 0, zIndex: 50, display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <h1 style={{ fontSize: "20px", fontWeight: "700", color: "#fff" }}>
-              {allItems.find(n => n.key === activeKey)?.label || "Dashboard"}
-            </h1>
-            <p style={{ color: "#6b7280", fontSize: "13px", marginTop: "2px" }}>Visao geral em tempo real</p>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ color: "#6b7280", fontSize: "12px" }}>Empresa:</span>
+              <span style={{ color: "#e4e4e7", fontSize: "13px", fontWeight: "600" }}>Doctor Auto Bosch</span>
+              <span style={{ color: "#e4e4e7", fontSize: "13px", fontWeight: "600" }}>Doctor Auto Prime</span>
+            </div>
           </div>
-          <button onClick={() => onNavigate("nova-os")} style={{ padding: "10px 20px", background: COR, border: "none", borderRadius: "10px", color: "#fff", fontSize: "13px", fontWeight: "600", cursor: "pointer", fontFamily: "inherit" }}>
-            + Nova OS
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <div style={{ width: "8px", height: "8px", borderRadius: "50%", background: "#10b981" }} />
+            <span style={{ color: "#10b981", fontSize: "12px", fontWeight: "500" }}>Online</span>
+          </div>
         </header>
         <div style={{ flex: 1, padding: "28px 32px" }}>{children}</div>
       </main>
     </div>
   )
-}
-
-export function BtnPrimary({ onClick, children, disabled }: { onClick?: () => void; children: ReactNode; disabled?: boolean }) {
-  return <button onClick={onClick} disabled={disabled} style={{ padding: "10px 20px", background: disabled ? "rgba(29,78,216,0.4)" : "#1d4ed8", border: "none", borderRadius: "10px", color: "#fff", fontSize: "14px", fontWeight: "600", cursor: disabled ? "not-allowed" : "pointer", fontFamily: "inherit" }}>{children}</button>
-}
-export function BtnSecondary({ onClick, children }: { onClick?: () => void; children: ReactNode }) {
-  return <button onClick={onClick} style={{ padding: "10px 20px", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "10px", color: "#9ca3af", fontSize: "14px", cursor: "pointer", fontFamily: "inherit" }}>{children}</button>
 }
