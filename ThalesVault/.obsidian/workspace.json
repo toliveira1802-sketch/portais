@@ -4,17 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "fab49662562c9f29",
+        "id": "4a46be7a5cadf711",
         "type": "tabs",
         "children": [
           {
-            "id": "a45cf2d99a56e69c",
+            "id": "7e7533662a0cdf73",
             "type": "leaf",
             "state": {
-              "type": "graph",
+              "type": "empty",
               "state": {},
-              "icon": "lucide-git-fork",
-              "title": "Visualização em gráfico"
+              "icon": "lucide-file",
+              "title": "Nova aba"
             }
           }
         ]
@@ -177,8 +177,9 @@
       "bases:Criar nova base": false
     }
   },
-  "active": "a45cf2d99a56e69c",
+  "active": "7e7533662a0cdf73",
   "lastOpenFiles": [
+    "Sem título.canvas",
     "thales-system-prompt.md",
     "guia-instalacao-copilot.md",
     "Sem título.md"
