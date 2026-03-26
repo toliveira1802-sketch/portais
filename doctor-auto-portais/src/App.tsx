@@ -1,17 +1,19 @@
 import { useState } from "react"
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom"
-import { AuthProvider, useAuth } from "./contexts/AuthContext"
 import SelecionarPerfil from "./pages/SelecionarPerfil"
-import LoginConsultor from "./pages/LoginConsultor"
-import ConsultorLayout from "./components/ConsultorLayout"
-import DashboardConsultor from "./pages/DashboardConsultor"
-import PatioPagina from "./pages/PatioPagina"
-import Agendamentos from "./pages/Agendamentos"
-import ClientesPagina from "./pages/ClientesPagina"
-import OrdensPagina from "./pages/OrdensPagina"
-import NovaOS from "./pages/NovaOS"
+import PortalConsultorStandalone from "./pages/PortalConsultorStandalone"
 import GestaoLayout from "./components/GestaoLayout"
 import GestaoDashboard from "./pages/gestao/GestaoDashboard"
+import GestaoOS from "./pages/gestao/GestaoOS"
+import GestaoMetas from "./pages/gestao/GestaoMetas"
+import GestaoMelhorias from "./pages/gestao/GestaoMelhorias"
+import GestaoFinanceiro from "./pages/gestao/GestaoFinanceiro"
+import GestaoComercial from "./pages/gestao/GestaoComercial"
+import GestaoFornecedores from "./pages/gestao/GestaoFornecedores"
+import GestaoOperacoes from "./pages/gestao/GestaoOperacoes"
+import GestaoRH from "./pages/gestao/GestaoRH"
+import GestaoTecnologia from "./pages/gestao/GestaoTecnologia"
+import GestaoOrfaos from "./pages/gestao/GestaoOrfaos"
 import MecanicoOSPage from "./pages/mecanico/MecanicoOS"
 import ClienteDashboardPage from "./pages/cliente/ClienteDashboard"
 import DevLayout from "./components/DevLayout"
@@ -27,7 +29,7 @@ import DevPerfilIA from "./pages/dev/DevPerfilIA"
 import DevIAQG from "./pages/dev/DevIAQG"
 
 // ── TIPOS ───────────────────────────────────────────────────────
-type ConsultorPage = "dashboard" | "patio" | "nova-os" | "clientes" | "ordens" | "visao-geral" | "agendamentos" | "financeiro" | "produtividade" | "agenda-mec" | "avaliacao-diaria"
+type ConsultorPage = "dashboard" | "patio" | "nova-os" | "clientes" | "ordens" | "visao-geral" | "agendamentos" | "financeiro" | "produtividade" | "agenda-mec" | "avaliacao-diaria" // kept for reference
 type GestaoPg = "gestao-visao" | "gestao-os" | "gestao-metas" | "gestao-melhorias" | "gestao-financeiro" | "gestao-comercial" | "gestao-fornecedores" | "gestao-operacoes" | "gestao-rh" | "gestao-tecnologia" | "gestao-orfaos"
 type MecPg = "mec-os" | "mec-checklist" | "mec-agenda" | "mec-patio"
 type CliPg = "cli-dashboard" | "cli-veiculos" | "cli-os" | "cli-avaliacoes"
@@ -122,30 +124,9 @@ function SelecionarPerfilRoute() {
   return <SelecionarPerfil onSelect={(k) => navigate(`/${k}`)} />
 }
 
-// ── PORTAL CONSULTOR ────────────────────────────────────────────
+// ── PORTAL CONSULTOR (Standalone) ────────────────────────────────
 function PortalConsultor() {
-  const navigate = useNavigate()
-  const { consultor, loading } = useAuth()
-  const [page, setPage] = useState<ConsultorPage>("dashboard")
-
-  if (loading) return <Spinner />
-  if (!consultor) return <LoginConsultor onBack={() => navigate("/")} />
-
-  const renderPage = () => {
-    if (page === "dashboard") return <DashboardConsultor onNavigate={(k) => setPage(k as ConsultorPage)} />
-    if (page === "patio") return <PatioPagina />
-    if (page === "agendamentos") return <Agendamentos />
-    if (page === "clientes") return <ClientesPagina />
-    if (page === "ordens") return <OrdensPagina onNavigate={(k) => setPage(k as ConsultorPage)} />
-    if (page === "nova-os") return <NovaOS onNavigate={(k) => setPage(k as ConsultorPage)} />
-    return <EmConstrucao titulo={page} />
-  }
-
-  return (
-    <ConsultorLayout activeKey={page} onNavigate={(k) => setPage(k as ConsultorPage)}>
-      {renderPage()}
-    </ConsultorLayout>
-  )
+  return <PortalConsultorStandalone />
 }
 
 // ── PORTAL GESTAO ───────────────────────────────────────────────
@@ -158,6 +139,16 @@ function PortalGestao() {
 
   const renderPage = () => {
     if (page === "gestao-visao") return <GestaoDashboard onNavigate={(k) => setPage(k as GestaoPg)} />
+    if (page === "gestao-os") return <GestaoOS />
+    if (page === "gestao-metas") return <GestaoMetas />
+    if (page === "gestao-melhorias") return <GestaoMelhorias />
+    if (page === "gestao-financeiro") return <GestaoFinanceiro />
+    if (page === "gestao-comercial") return <GestaoComercial />
+    if (page === "gestao-fornecedores") return <GestaoFornecedores />
+    if (page === "gestao-operacoes") return <GestaoOperacoes />
+    if (page === "gestao-rh") return <GestaoRH />
+    if (page === "gestao-tecnologia") return <GestaoTecnologia />
+    if (page === "gestao-orfaos") return <GestaoOrfaos />
     return <EmConstrucao titulo={page} />
   }
 
@@ -236,7 +227,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<SelecionarPerfilRoute />} />
-        <Route path="/consultor" element={<AuthProvider><PortalConsultor /></AuthProvider>} />
+        <Route path="/consultor" element={<PortalConsultor />} />
         <Route path="/gestao" element={<PortalGestao />} />
         <Route path="/mecanico" element={<PortalMecanico />} />
         <Route path="/cliente" element={<PortalCliente />} />
