@@ -1,0 +1,8 @@
+{
+	"nodes":[
+		{"id":"ef46802c93a141e2","x":-200,"y":823,"width":400,"height":400,"type":"file","file":"Sem título.canvas"},
+		{"id":"df2533df05c9fd2a","x":169,"y":-63,"width":250,"height":60,"type":"text","text":""},
+		{"id":"be423a37854c28fb","x":0,"y":465,"width":400,"height":400,"type":"file","file":"thales-system-prompt.md"}
+	],
+	"edges":[]
+}
