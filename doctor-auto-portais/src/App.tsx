@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { BrowserRouter, Routes, Route, useNavigate, Navigate } from "react-router-dom"
-import SelecionarPerfil from "./pages/SelecionarPerfil"
-import PortalConsultorStandalone from "./pages/PortalConsultorStandalone"
+import SelecionarPerfil from "./pages/CONSULTOR/SelecionarPerfil"
+import PortalConsultorStandalone from "./pages/CONSULTOR/PortalConsultorStandalone"
 import GestaoLayout from "./components/GestaoLayout"
 import GestaoDashboard from "./pages/gestao/GestaoDashboard"
 import GestaoOS from "./pages/gestao/GestaoOS"
@@ -27,12 +27,22 @@ import DevIntegracoes from "./pages/dev/DevIntegracoes"
 import DevIAPortal from "./pages/dev/DevIAPortal"
 import DevPerfilIA from "./pages/dev/DevPerfilIA"
 import DevIAQG from "./pages/dev/DevIAQG"
+import ColaboradorLayout from "./components/ColaboradorLayout"
+import ColaboradorDashboard from "./pages/colaborador/ColaboradorDashboard"
+import ColaboradorPonto from "./pages/colaborador/ColaboradorPonto"
+import ColaboradorOS from "./pages/colaborador/ColaboradorOS"
+import ColaboradorHolerite from "./pages/colaborador/ColaboradorHolerite"
+import ColaboradorComissoes from "./pages/colaborador/ColaboradorComissoes"
+import ColaboradorComunicados from "./pages/colaborador/ColaboradorComunicados"
+import ColaboradorFerias from "./pages/colaborador/ColaboradorFerias"
+import ColaboradorPerfil from "./pages/colaborador/ColaboradorPerfil"
 
 // ── TIPOS ───────────────────────────────────────────────────────
 type ConsultorPage = "dashboard" | "patio" | "nova-os" | "clientes" | "ordens" | "visao-geral" | "agendamentos" | "financeiro" | "produtividade" | "agenda-mec" | "avaliacao-diaria" // kept for reference
 type GestaoPg = "gestao-visao" | "gestao-os" | "gestao-metas" | "gestao-melhorias" | "gestao-financeiro" | "gestao-comercial" | "gestao-fornecedores" | "gestao-operacoes" | "gestao-rh" | "gestao-tecnologia" | "gestao-orfaos"
 type MecPg = "mec-os" | "mec-checklist" | "mec-agenda" | "mec-patio"
 type CliPg = "cli-dashboard" | "cli-veiculos" | "cli-os" | "cli-avaliacoes"
+type ColabPg = "colab-dashboard" | "colab-ponto" | "colab-os" | "colab-holerite" | "colab-comissoes" | "colab-comunicados" | "colab-ferias" | "colab-perfil"
 type DevPg = "dev-dashboard" | "dev-navigator" | "dev-logs" | "dev-config" | "dev-docs" | "dev-api" | "dev-permissoes" | "dev-integracoes" | "dev-ia-qg" | "dev-perfil-ia" | "dev-ia-portal" | "dev-tables" | "dev-usuarios" | "dev-banco" | "dev-sql" | "dev-processos" | "dev-ferramentas" | "sidebar-gestao" | "sidebar-consultor" | "sidebar-mecanico"
 
 // ── COMPONENTES AUXILIARES ──────────────────────────────────────
@@ -133,12 +143,13 @@ function PortalConsultor() {
 function PortalGestao() {
   const navigate = useNavigate()
   const [logado, setLogado] = useState(false)
+  const [usuario, setUsuario] = useState<any>(null)
   const [page, setPage] = useState<GestaoPg>("gestao-visao")
 
-  if (!logado) return <LoginSimples titulo="Portal Gestao" cor="#7c3aed" tabela="colaboradores_portal_gestao" onLogin={() => setLogado(true)} />
+  if (!logado) return <LoginSimples titulo="Portal Gestao" cor="#7c3aed" tabela="colaboradores_portal_gestao" onLogin={(user) => { setUsuario(user); setLogado(true) }} />
 
   const renderPage = () => {
-    if (page === "gestao-visao") return <GestaoDashboard onNavigate={(k) => setPage(k as GestaoPg)} />
+    if (page === "gestao-visao") return <GestaoDashboard onNavigate={(k) => setPage(k as GestaoPg)} usuario={usuario} />
     if (page === "gestao-os") return <GestaoOS />
     if (page === "gestao-metas") return <GestaoMetas />
     if (page === "gestao-melhorias") return <GestaoMelhorias />
@@ -153,7 +164,7 @@ function PortalGestao() {
   }
 
   return (
-    <GestaoLayout activeKey={page} onNavigate={(k) => setPage(k as GestaoPg)} onLogout={() => navigate("/")}>
+    <GestaoLayout activeKey={page} onNavigate={(k) => setPage(k as GestaoPg)} onLogout={() => navigate("/")} userName={usuario?.nome?.split(" ").slice(0,2).join(" ") || "Gestor"}>
       <div>{renderPage()}</div>
     </GestaoLayout>
   )
@@ -189,6 +200,40 @@ function PortalCliente() {
   }
 
   return <>{renderPage()}</>
+}
+
+// ── PORTAL COLABORADOR ──────────────────────────────────────────
+function PortalColaborador() {
+  const navigate = useNavigate()
+  const [logado, setLogado] = useState(false)
+  const [userData, setUserData] = useState<any>(null)
+  const [page, setPage] = useState<ColabPg>("colab-dashboard")
+
+  if (!logado) return <LoginSimples titulo="Portal Colaborador" cor="#0891b2" tabela="colaboradores_portal_consultor" camposBusca="username,email" onLogin={(user) => { setUserData(user); setLogado(true) }} />
+
+  const renderPage = () => {
+    if (page === "colab-dashboard") return <ColaboradorDashboard user={userData} onNavigate={(k) => setPage(k as ColabPg)} />
+    if (page === "colab-ponto") return <ColaboradorPonto user={userData} />
+    if (page === "colab-os") return <ColaboradorOS user={userData} />
+    if (page === "colab-holerite") return <ColaboradorHolerite user={userData} />
+    if (page === "colab-comissoes") return <ColaboradorComissoes user={userData} />
+    if (page === "colab-comunicados") return <ColaboradorComunicados user={userData} />
+    if (page === "colab-ferias") return <ColaboradorFerias user={userData} />
+    if (page === "colab-perfil") return <ColaboradorPerfil user={userData} />
+    return <EmConstrucao titulo={page} />
+  }
+
+  return (
+    <ColaboradorLayout
+      activeKey={page}
+      onNavigate={(k) => setPage(k as ColabPg)}
+      onLogout={() => navigate("/")}
+      userName={userData?.nome?.split(" ").slice(0, 2).join(" ") || "Colaborador"}
+      userCargo={userData?.cargo}
+    >
+      {renderPage()}
+    </ColaboradorLayout>
+  )
 }
 
 // ── PORTAL DEV ──────────────────────────────────────────────────
@@ -231,6 +276,7 @@ export default function App() {
         <Route path="/gestao" element={<PortalGestao />} />
         <Route path="/mecanico" element={<PortalMecanico />} />
         <Route path="/cliente" element={<PortalCliente />} />
+        <Route path="/colaborador" element={<PortalColaborador />} />
         <Route path="/dev" element={<PortalDev />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

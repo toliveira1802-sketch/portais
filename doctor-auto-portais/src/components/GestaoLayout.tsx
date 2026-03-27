@@ -18,11 +18,12 @@ const navOperacoes = [
   { icon:"🚗", label:"Veiculos Orfaos", key:"gestao-orfaos" },
 ];
 
-export default function GestaoLayout({ children, activeKey, onNavigate, onLogout }: {
+export default function GestaoLayout({ children, activeKey, onNavigate, onLogout, userName }: {
   children: ReactNode;
   activeKey: string;
   onNavigate: (k: string) => void;
   onLogout: () => void;
+  userName?: string;
 }) {
   const [sec, setSec] = useState<Record<string,boolean>>({ fin:true, ops:true });
 
@@ -81,7 +82,7 @@ export default function GestaoLayout({ children, activeKey, onNavigate, onLogout
         </nav>
         <div style={{ padding:"16px", borderTop:"1px solid #27272a" }}>
           <div style={{ color:"#52525b", fontSize:"11px", marginBottom:"2px" }}>Logado como</div>
-          <div style={{ color:"#e4e4e7", fontSize:"13px", fontWeight:"600" }}>Gestor</div>
+          <div style={{ color:"#e4e4e7", fontSize:"13px", fontWeight:"600" }}>{userName || "Gestor"}</div>
           <div style={{ color:"#52525b", fontSize:"11px", marginBottom:"10px" }}>Doctor Auto Prime</div>
           <button onClick={onLogout} style={{ background:"transparent", border:"none", color:"#ef4444", cursor:"pointer", fontSize:"13px", display:"flex", alignItems:"center", gap:"6px" }}>
             🚪 Sair

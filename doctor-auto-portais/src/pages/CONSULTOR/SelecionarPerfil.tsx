@@ -2,6 +2,7 @@ const portais = [
   { key:"consultor", label:"Consultor", icon:"🔧", cor:"#1d4ed8", sub:"Atendimento e OS" },
   { key:"gestao", label:"Gestao", icon:"📊", cor:"#7c3aed", sub:"Gerenciamento" },
   { key:"mecanico", label:"Mecanico", icon:"⚙️", cor:"#ea580c", sub:"Execucao de servicos" },
+  { key:"colaborador", label:"Colaborador", icon:"👷", cor:"#0891b2", sub:"Ponto, OS e holerite" },
   { key:"dev", label:"Developer", icon:"💻", cor:"#10b981", sub:"Administracao do sistema" },
 ]
 
